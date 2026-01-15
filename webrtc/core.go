@@ -81,8 +81,14 @@ func NewCore(args []string) (*Core, bool) {
 			panic(err)
 		}
 	} else {
-		// 可选：在非 Linux 系统上使用默认日志处理器或跳过
-		// p.logger = defaultLogger
+		p.logger, err = NewLogger(
+			Level(p.conf.LogLevel),
+			map[Destination]struct{}{},
+			"",
+		)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	p.Log(Debug, "Config: %v", *p.conf)
