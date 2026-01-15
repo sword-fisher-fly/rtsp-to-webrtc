@@ -52,7 +52,7 @@ jobs:
         id: package
         run: |
           TAG_NAME=${{ github.ref_name }}
-          ARTIFACT_NAME="rtsp-to-webrtc-${TAG_NAME}-linux-amd64"
+          ARTIFACT_NAME="rtsp-to-webrtc-v1.0.0-linux-amd64"
           mkdir -p release
           cp ./bin/rtsp-to-webrtc release/
           cd release
