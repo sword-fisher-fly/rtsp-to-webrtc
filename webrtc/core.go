@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 
 	"github.com/alecthomas/kong"
 
 	"github.com/gin-gonic/gin"
 )
 
-var version = "v0.0.0"
+var version = "v1.0.0"
 
 type Core struct {
 	ctx          context.Context
@@ -70,14 +71,18 @@ func NewCore(args []string) (*Core, bool) {
 		panic(err)
 	}
 
-	// TODO:
-	p.logger, err = NewLogger(
-		Level(p.conf.LogLevel),
-		p.conf.LogDestinations,
-		p.conf.LogFile,
-	)
-	if err != nil {
-		panic(err)
+	if runtime.GOOS == "linux" {
+		p.logger, err = NewLogger(
+			Level(p.conf.LogLevel),
+			p.conf.LogDestinations,
+			p.conf.LogFile,
+		)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		// 可选：在非 Linux 系统上使用默认日志处理器或跳过
+		// p.logger = defaultLogger
 	}
 
 	p.Log(Debug, "Config: %v", *p.conf)
