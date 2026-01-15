@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -66,12 +67,14 @@ func NewLogger(level Level, destinations map[Destination]struct{}, fpath string)
 		}
 	}
 
-	if _, ok := destinations[DestinationSyslog]; ok {
-		var err error
-		lh.syslog, err = newSyslog("rtsp-simple-server")
-		if err != nil {
-			lh.Close()
-			return nil, err
+	if runtime.GOOS == "linux" {
+		if _, ok := destinations[DestinationSyslog]; ok {
+			var err error
+			lh.syslog, err = newSyslog("rtsp-simple-server")
+			if err != nil {
+				lh.Close()
+				return nil, err
+			}
 		}
 	}
 
