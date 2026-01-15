@@ -86,14 +86,27 @@ jobs:
           cd release
           tar -czf ../$FILENAME *
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-
+      - name: Read CHANGELOG
+        id: changelog
+        run: |
+          if [ -f "CHANGELOG.md" ]; then
+            echo "content<<EOF" >> $GITHUB_OUTPUT
+            cat CHANGELOG.md >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "content=No changelog provided." >> $GITHUB_OUTPUT
+          fi
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          # body: "Release ${{ github.event.inputs.release_version || github.ref_name }}"
           body: |
-            ## Release Notes
-            Build automated by GitHub Actions.
+            ${{ steps.changelog.outputs.content }}
+            
+            ---
+            ### 🛠 Build Info
+            * **Platform**: ${{ matrix.os }}
+            * **Arch**: ${{ matrix.arch }}
+            * **Filename**: `${{ steps.package.outputs.filename }}`
           note: "Artifact for ${{ matrix.os }} (${{ matrix.arch }}) is included."
           tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
           files: ${{ steps.package.outputs.filename }}
