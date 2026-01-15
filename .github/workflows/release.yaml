@@ -51,8 +51,13 @@ jobs:
       - name: Package build artifacts
         id: package
         run: |
-          TAG_NAME=${{ github.ref_name }}
-          ARTIFACT_NAME="rtsp-to-webrtc-v1.0.0-linux-amd64"
+          TAG_NAME="${{ github.event.inputs.release_version || github.ref_name }}"
+          if [[ "$TAG_NAME" == dev-\$(git* ]]; then
+            SHORT_HASH=$(git rev-parse --short HEAD)
+            TAG_NAME="dev-${SHORT_HASH}"
+          fi
+          
+          ARTIFACT_NAME="rtsp-to-webrtc-${TAG_NAME}-${{ github.event.inputs.build_platform }}"
           mkdir -p release
           cp ./bin/rtsp-to-webrtc release/
           cd release
@@ -62,7 +67,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: "Release ${{ github.ref_name }}"
+          body: "Release ${{ github.event.inputs.release_version || github.ref_name }}"
+          tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
           files: ./release/${{ steps.package.outputs.artifact_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
