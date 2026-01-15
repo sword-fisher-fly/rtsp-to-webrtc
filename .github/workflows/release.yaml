@@ -10,21 +10,34 @@ on:
         description: 'Define release version, e.g. v1.0.0'
         required: false
         default: 'master'
-      build_platform:
-        description: 'Choose build platform'
-        required: true
-        default: 'linux-amd64'
-        type: choice
-        options:
-          - linux-amd64
-          - windows-amd64
-          - darwin-arm64
-          - all
+      # build_platform:
+      #   description: 'Choose build platform'
+      #   required: true
+      #   default: 'linux-amd64'
+      #   type: choice
+      #   options:
+      #     - linux-amd64
+      #     - windows-amd64
+      #     - darwin-arm64
+      #     - all
 jobs:
   build-and-release:
+    name: Build for ${{ matrix.os }}-${{ matrix.arch }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    strategy:
+      matrix:
+        include:
+          - os: linux
+            arch: amd64
+            artifact_name: linux-amd64
+          - os: windows
+            arch: amd64
+            artifact_name: windows-amd64
+          - os: darwin
+            arch: arm64
+            artifact_name: darwin-arm64
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,18 +50,29 @@ jobs:
           go-version: '1.21'
           cache: true 
 
-      - name: Install Make (if needed)
+      # - name: Install Make (if needed)
+      #   run: |
+      #     if ! command -v make &> /dev/null; then
+      #       sudo apt update && sudo apt install -y make
+      #     fi
+
+      - name: Build with Cross-Compilation
         run: |
-          if ! command -v make &> /dev/null; then
-            sudo apt update && sudo apt install -y make
+          export GOOS=${{ matrix.os }}
+          export GOARCH=${{ matrix.arch }}
+          
+          BINARY_NAME="rtsp-to-webrtc"
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            BINARY_NAME="rtsp-to-webrtc.exe"
           fi
-
-      - name: Build project with make
-        run: |
+          
           make build
-          ls -la ./bin/
 
-      - name: Package build artifacts
+          mkdir -p release
+          mv ./bin/$BINARY_NAME ./release/
+          ls -la ./release/
+
+      - name: Package Artifacts
         id: package
         run: |
           TAG_NAME="${{ github.event.inputs.release_version || github.ref_name }}"
@@ -57,18 +81,18 @@ jobs:
             TAG_NAME="dev-${SHORT_HASH}"
           fi
           
-          ARTIFACT_NAME="rtsp-to-webrtc-${TAG_NAME}-${{ github.event.inputs.build_platform }}"
-          mkdir -p release
-          cp ./bin/rtsp-to-webrtc release/
+          FILENAME="rtsp-to-webrtc-${TAG_NAME}-${{ matrix.artifact_name }}.tar.gz"
+          
           cd release
-          tar -czf ${ARTIFACT_NAME}.tar.gz rtsp-to-webrtc
-          echo "artifact_name=${ARTIFACT_NAME}.tar.gz" >> $GITHUB_OUTPUT
+          tar -czf ../$FILENAME *
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release
+      - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           body: "Release ${{ github.event.inputs.release_version || github.ref_name }}"
           tag_name: ${{ github.event.inputs.release_version || github.ref_name }}
-          files: ./release/${{ steps.package.outputs.artifact_name }}
+          files: ${{ steps.package.outputs.filename }}
+          append_body: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
