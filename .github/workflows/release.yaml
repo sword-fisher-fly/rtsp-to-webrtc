@@ -9,7 +9,7 @@ on:
       release_version:
         description: 'Define release version, e.g. v1.0.0'
         required: false
-        default: 'dev-$(git rev-parse --short HEAD)'
+        default: 'master'
       build_platform:
         description: 'Choose build platform'
         required: true
@@ -52,7 +52,7 @@ jobs:
         id: package
         run: |
           TAG_NAME="${{ github.event.inputs.release_version || github.ref_name }}"
-          if [[ "$TAG_NAME" == dev-\$(git* ]]; then
+          if [[ "$TAG_NAME" == 'master' ]]; then
             SHORT_HASH=$(git rev-parse --short HEAD)
             TAG_NAME="dev-${SHORT_HASH}"
           fi
