@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/CodeDing/rtsp-to-webrtc/webrtc"
+	"github.com/sword-fisher-fly/rtsp-to-webrtc/webrtc"
 )
 
 func main() {
