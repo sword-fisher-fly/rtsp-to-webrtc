@@ -1,0 +1,68 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Define release version, e.g. v1.0.0'
+        required: false
+        default: 'dev-$(git rev-parse --short HEAD)'
+      build_platform:
+        description: 'Choose build platform'
+        required: true
+        default: 'linux-amd64'
+        type: choice
+        options:
+          - linux-amd64
+          - windows-amd64
+          - darwin-arm64
+          - all
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true 
+
+      - name: Install Make (if needed)
+        run: |
+          if ! command -v make &> /dev/null; then
+            sudo apt update && sudo apt install -y make
+          fi
+
+      - name: Build project with make
+        run: |
+          make build
+          ls -la ./bin/
+
+      - name: Package build artifacts
+        id: package
+        run: |
+          TAG_NAME=${{ github.ref_name }}
+          ARTIFACT_NAME="rtsp-to-webrtc-${TAG_NAME}-linux-amd64"
+          mkdir -p release
+          cp ./bin/your-project-bin release/
+          cd release
+          tar -czf ${ARTIFACT_NAME}.tar.gz your-project-bin
+          echo "artifact_name=${ARTIFACT_NAME}.tar.gz" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: "Release ${{ github.ref_name }}"
+          files: ./release/${{ steps.package.outputs.artifact_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
