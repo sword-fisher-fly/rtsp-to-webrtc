@@ -24,8 +24,8 @@ import (
 	"github.com/pion/ice/v2"
 	"github.com/pion/interceptor"
 	"github.com/pion/webrtc/v3"
-	"github.com/CodeDing/rtsp-to-webrtc/websocket"
-	"github.com/CodeDing/rtsp-to-webrtc/formatprocessor"
+	"github.com/sword-fisher-fly/rtsp-to-webrtc/formatprocessor"
+	"github.com/sword-fisher-fly/rtsp-to-webrtc/websocket"
 )
 
 const (

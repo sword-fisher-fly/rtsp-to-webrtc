@@ -18,7 +18,7 @@ import (
 	"github.com/pion/ice/v2"
 	"github.com/pion/webrtc/v3"
 
-	"github.com/CodeDing/rtsp-to-webrtc/websocket"
+	"github.com/sword-fisher-fly/rtsp-to-webrtc/websocket"
 )
 
 //go:embed webrtc_index.html
